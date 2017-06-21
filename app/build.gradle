@@ -28,4 +28,5 @@ dependencies {
     testCompile 'junit:junit:4.12'
     //Nearby connections
     compile 'com.google.android.gms:play-services-nearby:11.0.1'
+    compile 'com.orhanobut:logger:1.15'
 }
