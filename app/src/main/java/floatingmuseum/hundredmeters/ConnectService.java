@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -15,6 +16,9 @@ import com.google.android.gms.nearby.connection.ConnectionLifecycleCallback;
 import com.google.android.gms.nearby.connection.ConnectionResolution;
 import com.orhanobut.logger.Logger;
 
+import floatingmuseum.hundredmeters.utils.NicknameUtil;
+import floatingmuseum.hundredmeters.utils.SPUtil;
+
 /**
  * Created by Floatingmuseum on 2017/6/21.
  */
@@ -22,6 +26,8 @@ import com.orhanobut.logger.Logger;
 public class ConnectService extends Service implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     private GoogleApiClient googleApiClient;
+    private boolean autoAdvertising = true;
+    private boolean autoDiscovering = true;
 
     @Nullable
     @Override
@@ -49,8 +55,12 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
     @Override
     public void onConnected(@Nullable Bundle connectionHint) {
         Logger.d("ConnectService...已连接...hint:" + connectionHint + "...isConnected:" + googleApiClient.isConnected());
-        startAdvertising();
-        startDiscovering();
+//        if (autoAdvertising) {
+//            startAdvertising();
+//        }
+//        if (autoDiscovering) {
+//            startDiscovering();
+//        }
     }
 
     //addConnectionCallbacks
@@ -72,7 +82,12 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
     }
 
     private void startAdvertising() {
-
+        String nickname = SPUtil.getString("nickname", "");
+        if (TextUtils.isEmpty(nickname)) {
+            nickname = NicknameUtil.createNickname();
+            SPUtil.putString("nickname", nickname);
+        }
+        Logger.d("ConnectService...nickname:" + nickname);
 //        Nearby.Connections.startAdvertising(googleApiClient,)
     }
 

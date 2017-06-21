@@ -6,13 +6,12 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
-import android.support.v4.content.PermissionChecker;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.widget.Toast;
 
 
 import floatingmuseum.hundredmeters.utils.GoogleUtil;
+import floatingmuseum.hundredmeters.utils.NicknameUtil;
 import floatingmuseum.hundredmeters.utils.ToastUtil;
 
 
@@ -24,6 +23,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        NicknameUtil.createNickname();
 
         if (!GoogleUtil.isPlayServicesAvailable(this)) {
             ToastUtil.show(R.string.play_service_not_available);
@@ -57,5 +58,11 @@ public class MainActivity extends AppCompatActivity {
 
     private void bindConnectService() {
         startService(new Intent(this, ConnectService.class));
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        stopService(new Intent(this, ConnectService.class));
     }
 }
