@@ -83,10 +83,6 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
 
     private void startAdvertising() {
         String nickname = SPUtil.getString("nickname", "");
-        if (TextUtils.isEmpty(nickname)) {
-            nickname = NicknameUtil.createNickname();
-            SPUtil.putString("nickname", nickname);
-        }
         Logger.d("ConnectService...nickname:" + nickname);
 //        Nearby.Connections.startAdvertising(googleApiClient,)
     }
