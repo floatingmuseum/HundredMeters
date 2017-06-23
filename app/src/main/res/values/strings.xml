@@ -1,4 +1,8 @@
 <resources>
     <string name="app_name">HundredMeters</string>
     <string name="play_service_not_available">Google play service not available.</string>
+    <string name="welcome_stranger">欢迎来到HundredMeters.</string>
+    <string name="just_create_new_name">我刚刚通过随机算法帮你起了一个昵称,</string>
+    <string name="how_to_rename">如果你不喜欢这个昵称,可以到设置页面修改.</string>
+    <string name="welcome_back">欢迎回来,</string>
 </resources>

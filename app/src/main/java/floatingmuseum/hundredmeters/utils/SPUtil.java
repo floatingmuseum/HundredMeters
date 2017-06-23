@@ -7,7 +7,7 @@ import android.preference.PreferenceManager;
 import java.util.Set;
 
 /**
- * Created by Floatingmuseum on 2016/7/29.
+ * Created by BotY on 2016/7/29.
  */
 public class SPUtil {
     private static Context mContext;

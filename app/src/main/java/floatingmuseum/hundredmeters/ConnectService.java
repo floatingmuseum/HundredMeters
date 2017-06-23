@@ -4,30 +4,56 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.provider.BlockedNumberContract;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.nearby.Nearby;
+import com.google.android.gms.nearby.connection.AdvertisingOptions;
 import com.google.android.gms.nearby.connection.ConnectionInfo;
 import com.google.android.gms.nearby.connection.ConnectionLifecycleCallback;
 import com.google.android.gms.nearby.connection.ConnectionResolution;
+import com.google.android.gms.nearby.connection.ConnectionsStatusCodes;
+import com.google.android.gms.nearby.connection.DiscoveredEndpointInfo;
+import com.google.android.gms.nearby.connection.DiscoveryOptions;
+import com.google.android.gms.nearby.connection.EndpointDiscoveryCallback;
+import com.google.android.gms.nearby.connection.Payload;
+import com.google.android.gms.nearby.connection.PayloadCallback;
+import com.google.android.gms.nearby.connection.PayloadTransferUpdate;
+import com.google.android.gms.nearby.connection.Strategy;
 import com.orhanobut.logger.Logger;
+
+import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
+import java.util.Map;
 
 import floatingmuseum.hundredmeters.utils.NicknameUtil;
 import floatingmuseum.hundredmeters.utils.SPUtil;
 
 /**
- * Created by Floatingmuseum on 2017/6/21.
+ * Created by BotY on 2017/6/21.
  */
 
 public class ConnectService extends Service implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
+    public static final String ACTION_SEND_TEXT = "actionSendText";
+
+    public static final String EXTRA_TEXT_MESSAGE = "extraTextMessage";
+
     private GoogleApiClient googleApiClient;
     private boolean autoAdvertising = true;
     private boolean autoDiscovering = true;
+    private boolean autoAgreeConnectRequest = true;
+    private String remoteEndpointID;
+    private String serviceID = "HundredMeters.FloatingMuseum";
+    private Map<String, String> discoverUser = new HashMap<>();
+    private Map<String, String> requestUser = new HashMap<>();
+    private Map<String, String> connectedUser = new HashMap<>();
 
     @Nullable
     @Override
@@ -44,23 +70,53 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
                 .addApi(Nearby.CONNECTIONS_API)
                 .build();
         googleApiClient.connect();
+        Logger.d("ConnectService...onCreate:");
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        String action = intent.getAction();
+        Logger.d("ConnectService...onStartCommand:" + action);
+        if (!TextUtils.isEmpty(action)) {
+            switch (action) {
+                case ACTION_SEND_TEXT:
+                    sendTextMessage(intent.getStringExtra(EXTRA_TEXT_MESSAGE));
+                    break;
+            }
+        }
         return super.onStartCommand(intent, flags, startId);
+    }
+
+    private void sendTextMessage(String message) {
+        if (isConnected() && TextUtils.isEmpty(message)) {
+            try {
+                Nearby.Connections.sendPayload(googleApiClient, remoteEndpointID, Payload.fromBytes(message.getBytes("UTF-8")))
+                        .setResultCallback(new ResultCallback<Status>() {
+                            @Override
+                            public void onResult(@NonNull Status status) {
+                                Logger.d("ConnectService...发送信息...onResult:" + status.toString());
+                            }
+                        });
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private boolean isConnected() {
+        return googleApiClient.isConnected() && connectedUser.containsKey(remoteEndpointID);
     }
 
     //addConnectionCallbacks
     @Override
     public void onConnected(@Nullable Bundle connectionHint) {
         Logger.d("ConnectService...已连接...hint:" + connectionHint + "...isConnected:" + googleApiClient.isConnected());
-//        if (autoAdvertising) {
-//            startAdvertising();
-//        }
-//        if (autoDiscovering) {
-//            startDiscovering();
-//        }
+        if (autoAdvertising) {
+            startAdvertising();
+        }
+        if (autoDiscovering) {
+            startDiscovering();
+        }
     }
 
     //addConnectionCallbacks
@@ -84,15 +140,47 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
     private void startAdvertising() {
         String nickname = SPUtil.getString("nickname", "");
         Logger.d("ConnectService...nickname:" + nickname);
-//        Nearby.Connections.startAdvertising(googleApiClient,)
+        Nearby.Connections.startAdvertising(googleApiClient, nickname, serviceID, connectionLifecycleCallback, new AdvertisingOptions(Strategy.P2P_CLUSTER));
     }
 
     private void startDiscovering() {
+        Nearby.Connections.startDiscovery(googleApiClient, serviceID, endpointDiscoveryCallback, new DiscoveryOptions(Strategy.P2P_CLUSTER));
     }
 
     private void disconnect() {
         if (googleApiClient != null && googleApiClient.isConnected()) {
             googleApiClient.disconnect();
+        }
+    }
+
+    private void handleConnectRequest(String endpointID, ConnectionInfo info) {
+        requestUser.put(endpointID, info.getEndpointName());
+        if (autoAgreeConnectRequest) {
+            Logger.d("ConnectService...handleConnectRequest......允许建立连接:" + info.getEndpointName() + "...EndpointID:" + endpointID);
+            BotY.getInstance().sendNewMessage("同意与" + info.getEndpointName() + "建立连接.");
+            Nearby.Connections.acceptConnection(googleApiClient, endpointID, payloadCallback);
+        } else {
+//            new AlertDialog.Builder(this)
+//                    .setTitle("Accept connection to " + info.getEndpointName())
+//                    .setMessage("Confirm if the code " + info.getAuthenticationToken() + " is also displayed on the other device")
+//                    .setPositiveButton("Accept", new DialogInterface.OnClickListener() {
+//                        public void onClick(DialogInterface dialog, int which) {
+//                            // The user confirmed, so we can accept the connection.
+//                            Logger.d("CommunicateActivity...广播...允许连接:...endpointId:" + endpointID + "...endpointName:" + info.getEndpointName());
+//                            Nearby.Connections.acceptConnection(googleApiClient, endpointID, payloadCallback);
+//                            dialog.dismiss();
+//                        }
+//                    })
+//                    .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+//                        public void onClick(DialogInterface dialog, int which) {
+//                            // The user canceled, so we should reject the connection.
+//                            Logger.d("CommunicateActivity...广播...拒绝连接:...endpointId:" + endpointID + "...endpointName:" + info.getEndpointName());
+//                            Nearby.Connections.rejectConnection(googleApiClient, "拒绝访问");
+//                            dialog.dismiss();
+//                        }
+//                    })
+//                    .setIcon(android.R.drawable.ic_dialog_alert)
+//                    .show();
         }
     }
 
@@ -103,18 +191,93 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
 
     private ConnectionLifecycleCallback connectionLifecycleCallback = new ConnectionLifecycleCallback() {
         @Override
-        public void onConnectionInitiated(String s, ConnectionInfo connectionInfo) {
-
+        public void onConnectionInitiated(String endpointID, ConnectionInfo info) {
+            Logger.d("ConnectService...onConnectionInitiated......请求建立连接:" + info.getEndpointName() + "...EndpointID:" + endpointID);
+            BotY.getInstance().sendNewMessage(info.getEndpointName() + "请求与你建立连接");
+            handleConnectRequest(endpointID, info);
         }
 
         @Override
-        public void onConnectionResult(String s, ConnectionResolution connectionResolution) {
-
+        public void onConnectionResult(String endpointID, ConnectionResolution resolution) {
+            switch (resolution.getStatus().getStatusCode()) {
+                case ConnectionsStatusCodes.STATUS_OK:
+                    // We're connected! Can now start sending and receiving data.
+                    Logger.d("ConnectService...onConnectionResult():...endpointId:" + endpointID + "...StatusOK:连接建立成功");
+                    connectedUser.put(endpointID, requestUser.get(endpointID));
+                    requestUser.remove(endpointID);
+                    remoteEndpointID = endpointID;
+                    BotY.getInstance().sendNewMessage("与" + connectedUser.get(endpointID) + "连接建立成功.");
+                    break;
+                case ConnectionsStatusCodes.STATUS_CONNECTION_REJECTED:
+                    // The connection was rejected by one or both sides.
+                    Logger.d("ConnectService...onConnectionResult():...endpointId:" + endpointID + "...StatusRejected:连接被拒绝");
+                    BotY.getInstance().sendNewMessage("与" + requestUser.get(endpointID) + "连接建立被拒绝.");
+                    requestUser.remove(endpointID);
+                    remoteEndpointID = "";
+                    break;
+            }
         }
 
         @Override
-        public void onDisconnected(String s) {
+        public void onDisconnected(String endpointID) {
+            Logger.d("CommunicateActivity...onDisconnected():...连接断开...endpointId:" + endpointID);
+            BotY.getInstance().sendNewMessage("与" + connectedUser.get(endpointID) + "连接已断开.");
+            remoteEndpointID = "";
+        }
+    };
 
+    private EndpointDiscoveryCallback endpointDiscoveryCallback = new EndpointDiscoveryCallback() {
+        @Override
+        public void onEndpointFound(final String endpointId, final DiscoveredEndpointInfo info) {
+            Logger.d("ConnectService...onEndpointFound......搜寻到:" + info.getEndpointName() + "...EndpointID:" + endpointId);
+            discoverUser.put(endpointId, info.getEndpointName());
+            BotY.getInstance().sendNewMessage("找到附近用户" + info.getEndpointName());
+            Nearby.Connections
+                    .requestConnection(googleApiClient, NicknameUtil.getNickname(), endpointId, connectionLifecycleCallback)
+                    .setResultCallback(new ResultCallback<Status>() {
+                        @Override
+                        public void onResult(@NonNull Status status) {
+                            if (status.isSuccess()) {
+                                Logger.d("ConnectService...请求连接...请求成功...等待认证");
+                                BotY.getInstance().sendNewMessage("正在请求与" + info.getEndpointName() + "连接,等待认证...");
+                                // We successfully requested a connection. Now both sides
+                                // must accept before the connection is established.
+                            } else {
+                                Logger.d("ConnectService...请求连接...请求失败" + status.toString());
+                                // Nearby Connections failed to request the connection.
+                                BotY.getInstance().sendNewMessage("请求与" + info.getEndpointName() + "连接,请求失败..." + status.toString());
+                            }
+                        }
+                    });
+        }
+
+        @Override
+        public void onEndpointLost(String endpointId) {
+            Logger.d("ConnectService...onEndpointLost......丢失...EndpointID:" + endpointId);
+            BotY.getInstance().sendNewMessage("丢失附近用户" + discoverUser.get(endpointId));
+            discoverUser.remove(endpointId);
+        }
+    };
+
+    private PayloadCallback payloadCallback = new PayloadCallback() {
+        @Override
+        public void onPayloadReceived(String endpointID, Payload payload) {
+            Logger.d("ConnectService...接收信息...onPayloadReceived():endpointID:" + endpointID + "...Type:" + payload.getType());
+            if (Payload.Type.BYTES == payload.getType()) {
+                try {
+                    String content = new String(payload.asBytes(), "UTF-8");
+//                    ToastUtil.show("Message:" + content + "...From:" + endpointID);
+                    MessageManager.getInstance().sendNewMessage(connectedUser.get(endpointID), endpointID, content);
+                    Logger.d("ConnectService...接收信息...onPayloadReceived()...remoteNickname:" + connectedUser.get(endpointID) + "...Message:" + content);
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        @Override
+        public void onPayloadTransferUpdate(String endpointID, PayloadTransferUpdate update) {
+            Logger.d("ConnectService...接收信息...onPayloadReceived()...remoteNickname:" + connectedUser.get(endpointID) + "...endpointID:" + endpointID + "...Total:" + update.getTotalBytes() + "...Current:" + update.getBytesTransferred());
         }
     };
 }

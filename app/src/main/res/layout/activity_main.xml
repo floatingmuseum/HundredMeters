@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/activity_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_black"
@@ -11,10 +10,28 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="floatingmuseum.hundredmeters.MainActivity">
 
-    <TextView
-        android:id="@+id/tv_username"
-        android:layout_width="wrap_content"
+    <ScrollView
+        android:id="@+id/sv_scroll_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/et_input">
+
+        <LinearLayout
+            android:id="@+id/ll_message_board"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/background_black"
+            android:orientation="vertical" />
+    </ScrollView>
+
+
+    <EditText
+        android:id="@+id/et_input"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:background="@color/background_black"
+        android:imeOptions="actionDone"
         android:textColor="@color/text_green"
-        tools:text="Hello World!" />
+        android:textCursorDrawable="@color/edit_text_cursor_white" />
 </RelativeLayout>

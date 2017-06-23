@@ -6,7 +6,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 
 /**
- * Created by Floatingmuseum on 2017/6/21.
+ * Created by BotY on 2017/6/21.
  */
 
 public class GoogleUtil {

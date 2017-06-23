@@ -6,7 +6,7 @@ import android.content.Context;
 import floatingmuseum.hundredmeters.utils.SPUtil;
 
 /**
- * Created by Floatingmuseum on 2017/6/21.
+ * Created by BotY on 2017/6/21.
  */
 
 public class App extends Application {

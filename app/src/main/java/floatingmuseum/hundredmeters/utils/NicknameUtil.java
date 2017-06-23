@@ -1,11 +1,13 @@
 package floatingmuseum.hundredmeters.utils;
 
+import android.text.TextUtils;
+
 import com.orhanobut.logger.Logger;
 
 import java.util.Random;
 
 /**
- * Created by Floatingmuseum on 2017/6/21.
+ * Created by BotY on 2017/6/21.
  */
 
 public class NicknameUtil {
@@ -24,13 +26,26 @@ public class NicknameUtil {
         long startTime = System.currentTimeMillis();
         String nickname = "";
         Random random = new Random();
-        for (int x = 0; x < 10; x++) {
+        for (int x = 0; x < 6; x++) {
             int position = random.nextInt(cases.length);
             nickname += cases[position];
         }
-        nickname = nickname + "|" + System.currentTimeMillis();
+        nickname = nickname + "(" + System.currentTimeMillis() + ")";
         long endTime = System.currentTimeMillis() - startTime;
         Logger.d("随机昵称:" + nickname + "...生成耗时:" + endTime);
+        SPUtil.putString("nickname", nickname);
         return nickname;
+    }
+
+    public static String getNickname() {
+        String nickname = SPUtil.getString("nickname", "");
+        if (!TextUtils.isEmpty(nickname)) {
+            nickname = nickname.substring(0, nickname.indexOf("("));
+        }
+        return nickname;
+    }
+
+    public static String getNicknameWithCreateTime() {
+        return SPUtil.getString("nickname", "");
     }
 }
