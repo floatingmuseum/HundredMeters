@@ -5,4 +5,11 @@
     <string name="just_create_new_name">我刚刚通过随机算法帮你起了一个昵称,</string>
     <string name="how_to_rename">如果你不喜欢这个昵称,可以到设置页面修改.</string>
     <string name="welcome_back">欢迎回来,</string>
+    <string name="sorry_for_no_google_service">没有谷歌服务我什么也做不了,唉.</string>
+    <string name="start_advertising">开始进行广播…</string>
+    <string name="start_advertising_successfully">启动广播成功.</string>
+    <string name="start_advertising_failed">启动广播失败</string>
+    <string name="already_advertising">已处于广播发送状态中.</string>
+    <string name="start_discovery_successfully">启动搜索成功.</string>
+    <string name="start_discovery_failed">启动搜索失败.</string>
 </resources>

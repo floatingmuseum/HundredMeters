@@ -10,19 +10,12 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="floatingmuseum.hundredmeters.MainActivity">
 
-    <ScrollView
-        android:id="@+id/sv_scroll_container"
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/rv_message_board"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_above="@+id/et_input">
-
-        <LinearLayout
-            android:id="@+id/ll_message_board"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/background_black"
-            android:orientation="vertical" />
-    </ScrollView>
+        android:layout_height="wrap_content"
+        android:background="@color/background_black"
+        android:orientation="vertical" />
 
 
     <EditText

@@ -10,7 +10,9 @@ import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
 import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.CommonStatusCodes;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.Result;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.nearby.Nearby;
@@ -18,6 +20,7 @@ import com.google.android.gms.nearby.connection.AdvertisingOptions;
 import com.google.android.gms.nearby.connection.ConnectionInfo;
 import com.google.android.gms.nearby.connection.ConnectionLifecycleCallback;
 import com.google.android.gms.nearby.connection.ConnectionResolution;
+import com.google.android.gms.nearby.connection.Connections;
 import com.google.android.gms.nearby.connection.ConnectionsStatusCodes;
 import com.google.android.gms.nearby.connection.DiscoveredEndpointInfo;
 import com.google.android.gms.nearby.connection.DiscoveryOptions;
@@ -33,6 +36,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import floatingmuseum.hundredmeters.utils.NicknameUtil;
+import floatingmuseum.hundredmeters.utils.ResUtil;
 import floatingmuseum.hundredmeters.utils.SPUtil;
 
 /**
@@ -110,7 +114,7 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
     //addConnectionCallbacks
     @Override
     public void onConnected(@Nullable Bundle connectionHint) {
-        Logger.d("ConnectService...已连接...hint:" + connectionHint + "...isConnected:" + googleApiClient.isConnected());
+        Logger.d("ConnectService...已连接GoogleApiClient...hint:" + connectionHint + "...isConnected:" + googleApiClient.isConnected());
         if (autoAdvertising) {
             startAdvertising();
         }
@@ -140,11 +144,35 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
     private void startAdvertising() {
         String nickname = SPUtil.getString("nickname", "");
         Logger.d("ConnectService...nickname:" + nickname);
-        Nearby.Connections.startAdvertising(googleApiClient, nickname, serviceID, connectionLifecycleCallback, new AdvertisingOptions(Strategy.P2P_CLUSTER));
+        BotY.getInstance().sendNewMessage(ResUtil.getString(R.string.start_advertising));
+        Nearby.Connections.startAdvertising(googleApiClient, nickname, serviceID, connectionLifecycleCallback, new AdvertisingOptions(Strategy.P2P_CLUSTER))
+                .setResultCallback(new ResultCallback<Connections.StartAdvertisingResult>() {
+                    @Override
+                    public void onResult(@NonNull Connections.StartAdvertisingResult result) {
+                        int statusCode = result.getStatus().getStatusCode();
+                        if (ConnectionsStatusCodes.STATUS_OK == statusCode) {
+                            BotY.getInstance().sendNewMessage(ResUtil.getString(R.string.start_advertising_successfully));
+                        } else if (ConnectionsStatusCodes.STATUS_ERROR == statusCode) {
+                            BotY.getInstance().sendNewMessage(ResUtil.getString(R.string.start_advertising_failed));
+                        } else if (ConnectionsStatusCodes.STATUS_ALREADY_ADVERTISING == statusCode) {
+                            BotY.getInstance().sendNewMessage(ResUtil.getString(R.string.already_advertising));
+                        }
+                    }
+                });
     }
 
     private void startDiscovering() {
-        Nearby.Connections.startDiscovery(googleApiClient, serviceID, endpointDiscoveryCallback, new DiscoveryOptions(Strategy.P2P_CLUSTER));
+        Nearby.Connections.startDiscovery(googleApiClient, serviceID, endpointDiscoveryCallback, new DiscoveryOptions(Strategy.P2P_CLUSTER))
+                .setResultCallback(new ResultCallback<Status>() {
+                    @Override
+                    public void onResult(@NonNull Status status) {
+                        if (status.isSuccess()) {
+                            BotY.getInstance().sendNewMessage(ResUtil.getString(R.string.start_discovery_successfully));
+                        } else {
+                            BotY.getInstance().sendNewMessage(ResUtil.getString(R.string.start_discovery_failed));
+                        }
+                    }
+                });
     }
 
     private void disconnect() {
@@ -187,6 +215,8 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
     @Override
     public void onDestroy() {
         super.onDestroy();
+        Nearby.Connections.stopAllEndpoints(googleApiClient);
+        googleApiClient.disconnect();
     }
 
     private ConnectionLifecycleCallback connectionLifecycleCallback = new ConnectionLifecycleCallback() {

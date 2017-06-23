@@ -8,46 +8,58 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import floatingmuseum.hundredmeters.entities.RemoteMessage;
 import floatingmuseum.hundredmeters.utils.GoogleUtil;
 import floatingmuseum.hundredmeters.utils.NicknameUtil;
+import floatingmuseum.hundredmeters.utils.ResUtil;
 import floatingmuseum.hundredmeters.utils.ToastUtil;
 
 
 public class MainActivity extends AppCompatActivity implements BotY.BotYListener, MessageManager.NewMessageListener {
 
-    @BindView(R.id.ll_message_board)
-    LinearLayout llMessageBoard;
-    @BindView(R.id.sv_scroll_container)
-    ScrollView svScrollContainer;
     @BindView(R.id.et_input)
     EditText etInput;
+    @BindView(R.id.rv_message_board)
+    RecyclerView rvMessageBoard;
 
     private int permissionRequestCode = 100;
+    private List<RemoteMessage> messageList = new ArrayList<>();
+    private LinearLayoutManager linearLayoutManager;
+    private MessageAdapter messageAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
+        initView();
         BotY.getInstance().setBotYListener(this);
         if (!GoogleUtil.isPlayServicesAvailable(this)) {
             ToastUtil.show(R.string.play_service_not_available);
+            BotY.getInstance().sendNewMessage(ResUtil.getString(R.string.sorry_for_no_google_service));
+            return;
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             permissionCheck();
+        } else {
+            initGuide();
         }
     }
 
@@ -55,7 +67,6 @@ public class MainActivity extends AppCompatActivity implements BotY.BotYListener
     private void permissionCheck() {
         int result = checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION);
         if (PackageManager.PERMISSION_GRANTED == result) {
-            initView();
             initGuide();
         } else {
             requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, permissionRequestCode);
@@ -66,7 +77,6 @@ public class MainActivity extends AppCompatActivity implements BotY.BotYListener
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (permissionRequestCode == requestCode) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                initView();
                 initGuide();
             } else {
                 ToastUtil.show("I really need this permission.");
@@ -75,6 +85,10 @@ public class MainActivity extends AppCompatActivity implements BotY.BotYListener
     }
 
     private void initView() {
+        linearLayoutManager = new LinearLayoutManager(this);
+        rvMessageBoard.setLayoutManager(linearLayoutManager);
+        messageAdapter = new MessageAdapter(messageList);
+        rvMessageBoard.setAdapter(messageAdapter);
 //        llMessageBoard.setOnClickListener(new View.OnClickListener() {
 //            @Override
 //            public void onClick(View view) {
@@ -119,13 +133,12 @@ public class MainActivity extends AppCompatActivity implements BotY.BotYListener
     }
 
     private void addMessage(String nickname, String message) {
-        LinearLayout llMessageItem = (LinearLayout) LayoutInflater.from(this).inflate(R.layout.layout_message_text, null);
-        TextView tvNickname = llMessageItem.findViewById(R.id.tv_nickname);
-        tvNickname.setText(nickname);
-        TextView tvMessage = llMessageItem.findViewById(R.id.tv_message);
-        tvMessage.setText(message);
-        llMessageBoard.addView(llMessageItem, llMessageBoard.getChildCount() - 1);
-        svScrollContainer.fullScroll(ScrollView.FOCUS_DOWN);
+        RemoteMessage remoteMessage = new RemoteMessage();
+        remoteMessage.setNickname(nickname);
+        remoteMessage.setMessage(message);
+        messageList.add(remoteMessage);
+        messageAdapter.notifyItemInserted(messageList.size() - 1);
+        rvMessageBoard.scrollToPosition(messageList.size() - 1);
     }
 
     @Override
