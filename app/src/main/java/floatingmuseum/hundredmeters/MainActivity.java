@@ -9,15 +9,18 @@ import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.LinearSmoothScroller;
 import android.support.v7.widget.RecyclerView;
+import android.text.Editable;
 import android.text.TextUtils;
 import android.view.KeyEvent;
-import android.view.LayoutInflater;
+import android.view.View;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
+
+import com.orhanobut.logger.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +40,8 @@ public class MainActivity extends AppCompatActivity implements BotY.BotYListener
     EditText etInput;
     @BindView(R.id.rv_message_board)
     RecyclerView rvMessageBoard;
+    @BindView(R.id.tv_send)
+    TextView tvSend;
 
     private int permissionRequestCode = 100;
     private List<RemoteMessage> messageList = new ArrayList<>();
@@ -89,21 +94,12 @@ public class MainActivity extends AppCompatActivity implements BotY.BotYListener
         rvMessageBoard.setLayoutManager(linearLayoutManager);
         messageAdapter = new MessageAdapter(messageList);
         rvMessageBoard.setAdapter(messageAdapter);
-//        llMessageBoard.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//
-//            }
-//        });
-        etInput.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+        linearLayoutManager.setStackFromEnd(true);
+
+        tvSend.setOnClickListener(new View.OnClickListener() {
             @Override
-            public boolean onEditorAction(TextView textView, int actionID, KeyEvent keyEvent) {
-                if (EditorInfo.IME_ACTION_DONE == actionID && !TextUtils.isEmpty(etInput.getText())) {
-                    Intent message = new Intent(MainActivity.this, ConnectService.class);
-                    message.setAction(ConnectService.ACTION_SEND_TEXT);
-                    message.putExtra(ConnectService.EXTRA_TEXT_MESSAGE, etInput.getText().toString());
-                }
-                return true;
+            public void onClick(View view) {
+                sendMessage();
             }
         });
     }
@@ -122,13 +118,24 @@ public class MainActivity extends AppCompatActivity implements BotY.BotYListener
         startService(new Intent(this, ConnectService.class));
     }
 
+    private void sendMessage() {
+        Editable editable = etInput.getText();
+        if (!TextUtils.isEmpty(editable)) {
+            Intent messageIntent = new Intent(this, ConnectService.class);
+            messageIntent.setAction(ConnectService.ACTION_SEND_TEXT);
+            messageIntent.putExtra(ConnectService.EXTRA_TEXT_MESSAGE, editable.toString());
+            startService(messageIntent);
+            etInput.setText("");
+        }
+    }
+
     @Override
     public void onBotYSaid(String botName, String message) {
         addMessage(botName, message);
     }
 
     @Override
-    public void onReceiveNewMessage(String nickname, String endpointID, String message) {
+    public void onReceiveNewMessage(String nickname, String message) {
         addMessage(nickname, message);
     }
 

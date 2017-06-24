@@ -28,11 +28,11 @@ public class MessageManager {
         this.newMessageListener = newMessageListener;
     }
 
-    public void sendNewMessage(String nickname, String endpointID, String message) {
-        newMessageListener.onReceiveNewMessage(nickname, endpointID, message);
+    public void sendNewMessage(String nickname,  String message) {
+        newMessageListener.onReceiveNewMessage(nickname,  message);
     }
 
     public interface NewMessageListener {
-        void onReceiveNewMessage(String nickname, String endpointID, String message);
+        void onReceiveNewMessage(String nickname,  String message);
     }
 }

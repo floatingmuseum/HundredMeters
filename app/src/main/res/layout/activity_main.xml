@@ -1,30 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<floatingmuseum.hundredmeters.view.MessageBoardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_black"
-    android:paddingBottom="@dimen/activity_vertical_margin"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="floatingmuseum.hundredmeters.MainActivity">
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/rv_message_board"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/background_black"
-        android:orientation="vertical" />
+        android:layout_height="match_parent"
+        android:layout_above="@+id/divider"
+        android:orientation="vertical"
+        android:paddingBottom="@dimen/activity_vertical_margin"
+        android:paddingLeft="@dimen/activity_horizontal_margin"
+        android:paddingRight="@dimen/activity_horizontal_margin"
+        android:paddingTop="@dimen/activity_vertical_margin"
+        tools:listitem="@android:layout/simple_list_item_activated_1" />
 
+    <View
+        android:id="@+id/divider"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_above="@+id/ll_input_container"
+        android:background="@color/text_green" />
 
-    <EditText
-        android:id="@+id/et_input"
+    <LinearLayout
+        android:id="@+id/ll_input_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:background="@color/background_black"
-        android:imeOptions="actionDone"
-        android:textColor="@color/text_green"
-        android:textCursorDrawable="@color/edit_text_cursor_white" />
-</RelativeLayout>
+        android:orientation="horizontal">
+
+        <EditText
+            android:id="@+id/et_input"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="8"
+            android:background="@color/background_black"
+            android:cursorVisible="true"
+            android:imeOptions="actionDone"
+            android:textColor="@color/text_green"
+            android:textCursorDrawable="@drawable/edit_text_cursor_white" />
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:background="@color/text_green" />
+
+        <TextView
+            android:id="@+id/tv_send"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="2"
+            android:gravity="center"
+            android:text="Send"
+            android:textColor="@color/text_green"
+            android:textSize="18sp" />
+    </LinearLayout>
+
+</floatingmuseum.hundredmeters.view.MessageBoardView>

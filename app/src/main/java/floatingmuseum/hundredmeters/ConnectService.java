@@ -91,14 +91,20 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
         return super.onStartCommand(intent, flags, startId);
     }
 
-    private void sendTextMessage(String message) {
-        if (isConnected() && TextUtils.isEmpty(message)) {
+    private void sendTextMessage(final String message) {
+        Logger.d("ConnectService...发送信息...message:" + message + "..." + isConnected() + "...");
+        if (isConnected()) {
             try {
                 Nearby.Connections.sendPayload(googleApiClient, remoteEndpointID, Payload.fromBytes(message.getBytes("UTF-8")))
                         .setResultCallback(new ResultCallback<Status>() {
                             @Override
                             public void onResult(@NonNull Status status) {
-                                Logger.d("ConnectService...发送信息...onResult:" + status.toString());
+                                if (status.getStatusCode() == CommonStatusCodes.SUCCESS) {
+                                    Logger.d("ConnectService...发送信息成功...onResult:" + status.toString());
+                                    MessageManager.getInstance().sendNewMessage(SPUtil.getString("nickname", ""), message);
+                                } else if (CommonStatusCodes.ERROR == status.getStatusCode()) {
+                                    Logger.d("ConnectService...发送信息失败...onResult:" + status.toString());
+                                }
                             }
                         });
             } catch (UnsupportedEncodingException e) {
@@ -250,7 +256,7 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
 
         @Override
         public void onDisconnected(String endpointID) {
-            Logger.d("CommunicateActivity...onDisconnected():...连接断开...endpointId:" + endpointID);
+            Logger.d("CommunicateActivity...onDisconnected():...连接断开...endpointId:" + endpointID + "..." + connectedUser.get(endpointID));
             BotY.getInstance().sendNewMessage("与" + connectedUser.get(endpointID) + "连接已断开.");
             remoteEndpointID = "";
         }
@@ -297,7 +303,7 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
                 try {
                     String content = new String(payload.asBytes(), "UTF-8");
 //                    ToastUtil.show("Message:" + content + "...From:" + endpointID);
-                    MessageManager.getInstance().sendNewMessage(connectedUser.get(endpointID), endpointID, content);
+                    MessageManager.getInstance().sendNewMessage(connectedUser.get(endpointID), content);
                     Logger.d("ConnectService...接收信息...onPayloadReceived()...remoteNickname:" + connectedUser.get(endpointID) + "...Message:" + content);
                 } catch (UnsupportedEncodingException e) {
                     e.printStackTrace();
@@ -307,7 +313,7 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
 
         @Override
         public void onPayloadTransferUpdate(String endpointID, PayloadTransferUpdate update) {
-            Logger.d("ConnectService...接收信息...onPayloadReceived()...remoteNickname:" + connectedUser.get(endpointID) + "...endpointID:" + endpointID + "...Total:" + update.getTotalBytes() + "...Current:" + update.getBytesTransferred());
+//            Logger.d("ConnectService...接收信息...onPayloadReceived()...remoteNickname:" + connectedUser.get(endpointID) + "...endpointID:" + endpointID + "...Total:" + update.getTotalBytes() + "...Current:" + update.getBytesTransferred());
         }
     };
 }
