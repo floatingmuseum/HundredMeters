@@ -1,5 +1,7 @@
 package floatingmuseum.hundredmeters;
 
+import floatingmuseum.hundredmeters.entities.RemoteUser;
+
 /**
  * Created by BotY on 2017/6/21.
  */
@@ -28,11 +30,11 @@ public class MessageManager {
         this.newMessageListener = newMessageListener;
     }
 
-    public void sendNewMessage(String nickname,  String message) {
+    public void sendNewMessage(RemoteUser nickname, String message) {
         newMessageListener.onReceiveNewMessage(nickname,  message);
     }
 
     public interface NewMessageListener {
-        void onReceiveNewMessage(String nickname,  String message);
+        void onReceiveNewMessage(RemoteUser nickname,  String message);
     }
 }

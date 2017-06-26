@@ -1,5 +1,6 @@
 package floatingmuseum.hundredmeters;
 
+import floatingmuseum.hundredmeters.entities.RemoteUser;
 import floatingmuseum.hundredmeters.utils.NicknameUtil;
 
 /**
@@ -11,6 +12,7 @@ public class BotY {
     private static BotY BotY;
     private String botName = "Bot-Y";
     private BotYListener listener;
+    private final RemoteUser user;
 
     public static BotY getInstance() {
         if (BotY == null) {
@@ -24,6 +26,7 @@ public class BotY {
     }
 
     private BotY() {
+        user = new RemoteUser("", botName);
     }
 
     public void setBotYListener(BotYListener listener) {
@@ -34,19 +37,19 @@ public class BotY {
         if (isStranger) {
             NicknameUtil.createNickname();
             String nickname = NicknameUtil.getNickname();
-            listener.onBotYSaid(botName, App.context.getString(R.string.welcome_stranger));
-            listener.onBotYSaid(botName, App.context.getString(R.string.just_create_new_name) + nickname + ".");
-            listener.onBotYSaid(botName, App.context.getString(R.string.how_to_rename));
+            listener.onBotYSaid(user, App.context.getString(R.string.welcome_stranger));
+            listener.onBotYSaid(user, App.context.getString(R.string.just_create_new_name) + nickname + ".");
+            listener.onBotYSaid(user, App.context.getString(R.string.how_to_rename));
         } else {
-            listener.onBotYSaid(botName, App.context.getString(R.string.welcome_back) + NicknameUtil.getNickname() + ".");
+            listener.onBotYSaid(user, App.context.getString(R.string.welcome_back) + NicknameUtil.getNickname() + ".");
         }
     }
 
     public void sendNewMessage(String message) {
-        listener.onBotYSaid(botName, message);
+        listener.onBotYSaid(user, message);
     }
 
     public interface BotYListener {
-        void onBotYSaid(String botName, String message);
+        void onBotYSaid(RemoteUser bot, String message);
     }
 }

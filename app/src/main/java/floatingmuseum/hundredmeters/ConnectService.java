@@ -35,6 +35,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 
+import floatingmuseum.hundredmeters.entities.RemoteUser;
 import floatingmuseum.hundredmeters.utils.NicknameUtil;
 import floatingmuseum.hundredmeters.utils.ResUtil;
 import floatingmuseum.hundredmeters.utils.SPUtil;
@@ -55,9 +56,9 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
     private boolean autoAgreeConnectRequest = true;
     private String remoteEndpointID;
     private String serviceID = "HundredMeters.FloatingMuseum";
-    private Map<String, String> discoverUser = new HashMap<>();
-    private Map<String, String> requestUser = new HashMap<>();
-    private Map<String, String> connectedUser = new HashMap<>();
+    private Map<String, RemoteUser> discoverUser = new HashMap<>();
+    private Map<String, RemoteUser> requestUser = new HashMap<>();
+    private Map<String, RemoteUser> connectedUser = new HashMap<>();
 
     @Nullable
     @Override
@@ -181,6 +182,32 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
                 });
     }
 
+    private void requestConnection(final RemoteUser remoteUser) {
+        Nearby.Connections
+                .requestConnection(googleApiClient, NicknameUtil.getNickname(), remoteUser.getEndpointID(), connectionLifecycleCallback)
+                .setResultCallback(new ResultCallback<Status>() {
+                    @Override
+                    public void onResult(@NonNull Status status) {
+                        if (status.isSuccess()) {
+                            Logger.d("ConnectService...请求连接...请求成功...等待认证");
+                            BotY.getInstance().sendNewMessage("正在请求与" + remoteUser.getNickname() + "连接,等待认证...");
+                            // We successfully requested a connection. Now both sides
+                            // must accept before the connection is established.
+                        } else {
+                            /**
+                             * 错误码
+                             *
+                             * 8007 STATUS_BLUETOOTH_ERROR   There was an error trying to use the phone's Bluetooth capabilities.
+                             * 8012 STATUS_ENDPOINT_IO_ERROR   An attempt to read from/write to a connected remote endpoint failed. If this occurs repeatedly, consider invoking
+                             */
+                            Logger.d("ConnectService...请求连接...请求失败" + status.toString());
+                            // Nearby Connections failed to request the connection.
+                            BotY.getInstance().sendNewMessage("请求与" + remoteUser.getNickname() + "连接,请求失败..." + status.toString());
+                        }
+                    }
+                });
+    }
+
     private void disconnect() {
         if (googleApiClient != null && googleApiClient.isConnected()) {
             googleApiClient.disconnect();
@@ -188,7 +215,7 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
     }
 
     private void handleConnectRequest(String endpointID, ConnectionInfo info) {
-        requestUser.put(endpointID, info.getEndpointName());
+        requestUser.put(endpointID, new RemoteUser(endpointID, info.getEndpointName()));
         if (autoAgreeConnectRequest) {
             Logger.d("ConnectService...handleConnectRequest......允许建立连接:" + info.getEndpointName() + "...EndpointID:" + endpointID);
             BotY.getInstance().sendNewMessage("同意与" + info.getEndpointName() + "建立连接.");
@@ -265,26 +292,9 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
     private EndpointDiscoveryCallback endpointDiscoveryCallback = new EndpointDiscoveryCallback() {
         @Override
         public void onEndpointFound(final String endpointId, final DiscoveredEndpointInfo info) {
-            Logger.d("ConnectService...onEndpointFound......搜寻到:" + info.getEndpointName() + "...EndpointID:" + endpointId);
-            discoverUser.put(endpointId, info.getEndpointName());
+            Logger.d("ConnectService...onEndpointFound......搜寻到:" + info.getEndpointName() + "...EndpointID:" + endpointId + "...发起连接");
+            discoverUser.put(endpointId, new RemoteUser(endpointId, info.getEndpointName()));
             BotY.getInstance().sendNewMessage("找到附近用户" + info.getEndpointName());
-            Nearby.Connections
-                    .requestConnection(googleApiClient, NicknameUtil.getNickname(), endpointId, connectionLifecycleCallback)
-                    .setResultCallback(new ResultCallback<Status>() {
-                        @Override
-                        public void onResult(@NonNull Status status) {
-                            if (status.isSuccess()) {
-                                Logger.d("ConnectService...请求连接...请求成功...等待认证");
-                                BotY.getInstance().sendNewMessage("正在请求与" + info.getEndpointName() + "连接,等待认证...");
-                                // We successfully requested a connection. Now both sides
-                                // must accept before the connection is established.
-                            } else {
-                                Logger.d("ConnectService...请求连接...请求失败" + status.toString());
-                                // Nearby Connections failed to request the connection.
-                                BotY.getInstance().sendNewMessage("请求与" + info.getEndpointName() + "连接,请求失败..." + status.toString());
-                            }
-                        }
-                    });
         }
 
         @Override

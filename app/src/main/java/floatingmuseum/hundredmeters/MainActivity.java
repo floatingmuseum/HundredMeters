@@ -28,6 +28,7 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import floatingmuseum.hundredmeters.entities.RemoteMessage;
+import floatingmuseum.hundredmeters.entities.RemoteUser;
 import floatingmuseum.hundredmeters.utils.GoogleUtil;
 import floatingmuseum.hundredmeters.utils.NicknameUtil;
 import floatingmuseum.hundredmeters.utils.ResUtil;
@@ -130,19 +131,17 @@ public class MainActivity extends AppCompatActivity implements BotY.BotYListener
     }
 
     @Override
-    public void onBotYSaid(String botName, String message) {
-        addMessage(botName, message);
+    public void onBotYSaid(RemoteUser bot, String message) {
+        addMessage(bot, message);
     }
 
     @Override
-    public void onReceiveNewMessage(String nickname, String message) {
-        addMessage(nickname, message);
+    public void onReceiveNewMessage(RemoteUser remoteUser, String message) {
+        addMessage(remoteUser, message);
     }
 
-    private void addMessage(String nickname, String message) {
-        RemoteMessage remoteMessage = new RemoteMessage();
-        remoteMessage.setNickname(nickname);
-        remoteMessage.setMessage(message);
+    private void addMessage(RemoteUser user, String message) {
+        RemoteMessage remoteMessage = new RemoteMessage(user, message);
         messageList.add(remoteMessage);
         messageAdapter.notifyItemInserted(messageList.size() - 1);
         rvMessageBoard.scrollToPosition(messageList.size() - 1);
