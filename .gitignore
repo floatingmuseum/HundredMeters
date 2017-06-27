@@ -6,4 +6,4 @@ local.properties
 build/
 /captures
 .externalNativeBuild
-/app/src/res/values/api-key.xml
+/app/src/res/values/api-keys.xml

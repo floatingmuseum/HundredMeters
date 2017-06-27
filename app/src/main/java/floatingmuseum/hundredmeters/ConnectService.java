@@ -100,9 +100,10 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
                         .setResultCallback(new ResultCallback<Status>() {
                             @Override
                             public void onResult(@NonNull Status status) {
+                                Logger.d("ConnectService...状态码:" + status.getStatusCode() + "...状态信息:" + StatusCodeManager.getInstance().getCodeMessage(status.getStatusCode()));
                                 if (status.getStatusCode() == CommonStatusCodes.SUCCESS) {
                                     Logger.d("ConnectService...发送信息成功...onResult:" + status.toString());
-                                    MessageManager.getInstance().sendNewMessage(SPUtil.getString("nickname", ""), message);
+                                    BotY.getInstance().sendNewMessage(message);
                                 } else if (CommonStatusCodes.ERROR == status.getStatusCode()) {
                                     Logger.d("ConnectService...发送信息失败...onResult:" + status.toString());
                                 }
@@ -121,6 +122,7 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
     //addConnectionCallbacks
     @Override
     public void onConnected(@Nullable Bundle connectionHint) {
+        Nearby.Messages.
         Logger.d("ConnectService...已连接GoogleApiClient...hint:" + connectionHint + "...isConnected:" + googleApiClient.isConnected());
         if (autoAdvertising) {
             startAdvertising();
@@ -157,6 +159,7 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
                     @Override
                     public void onResult(@NonNull Connections.StartAdvertisingResult result) {
                         int statusCode = result.getStatus().getStatusCode();
+                        Logger.d("ConnectService...状态码:" + statusCode + "...状态信息:" + StatusCodeManager.getInstance().getCodeMessage(statusCode));
                         if (ConnectionsStatusCodes.STATUS_OK == statusCode) {
                             BotY.getInstance().sendNewMessage(ResUtil.getString(R.string.start_advertising_successfully));
                         } else if (ConnectionsStatusCodes.STATUS_ERROR == statusCode) {
@@ -173,6 +176,7 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
                 .setResultCallback(new ResultCallback<Status>() {
                     @Override
                     public void onResult(@NonNull Status status) {
+                        Logger.d("ConnectService...状态码:" + status.getStatusCode() + "...状态信息:" + StatusCodeManager.getInstance().getCodeMessage(status.getStatusCode()));
                         if (status.isSuccess()) {
                             BotY.getInstance().sendNewMessage(ResUtil.getString(R.string.start_discovery_successfully));
                         } else {
@@ -188,6 +192,7 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
                 .setResultCallback(new ResultCallback<Status>() {
                     @Override
                     public void onResult(@NonNull Status status) {
+                        Logger.d("ConnectService...状态码:" + status.getStatusCode() + "...状态信息:" + StatusCodeManager.getInstance().getCodeMessage(status.getStatusCode()));
                         if (status.isSuccess()) {
                             Logger.d("ConnectService...请求连接...请求成功...等待认证");
                             BotY.getInstance().sendNewMessage("正在请求与" + remoteUser.getNickname() + "连接,等待认证...");
@@ -202,7 +207,7 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
                              */
                             Logger.d("ConnectService...请求连接...请求失败" + status.toString());
                             // Nearby Connections failed to request the connection.
-                            BotY.getInstance().sendNewMessage("请求与" + remoteUser.getNickname() + "连接,请求失败..." + status.toString());
+                            BotY.getInstance().sendNewMessage("请求与" + remoteUser.getNickname() + "连接,请求失败...错误码:" + status.getStatusCode());
                         }
                     }
                 });
@@ -262,7 +267,10 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
 
         @Override
         public void onConnectionResult(String endpointID, ConnectionResolution resolution) {
-            switch (resolution.getStatus().getStatusCode()) {
+            int statusCode = resolution.getStatus().getStatusCode();
+            Logger.d("ConnectService...状态码:" + statusCode + "...状态信息:" + StatusCodeManager.getInstance().getCodeMessage(statusCode));
+
+            switch (statusCode) {
                 case ConnectionsStatusCodes.STATUS_OK:
                     // We're connected! Can now start sending and receiving data.
                     Logger.d("ConnectService...onConnectionResult():...endpointId:" + endpointID + "...StatusOK:连接建立成功");

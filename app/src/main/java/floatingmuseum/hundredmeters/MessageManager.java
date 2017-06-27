@@ -30,11 +30,11 @@ public class MessageManager {
         this.newMessageListener = newMessageListener;
     }
 
-    public void sendNewMessage(RemoteUser nickname, String message) {
-        newMessageListener.onReceiveNewMessage(nickname,  message);
+    public void sendNewMessage(RemoteUser remoteUser, String message) {
+        newMessageListener.onReceiveNewMessage(remoteUser,  message);
     }
 
     public interface NewMessageListener {
-        void onReceiveNewMessage(RemoteUser nickname,  String message);
+        void onReceiveNewMessage(RemoteUser remoteUser,  String message);
     }
 }

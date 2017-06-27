@@ -2,6 +2,9 @@ package floatingmuseum.hundredmeters;
 
 import android.app.Application;
 import android.content.Context;
+import android.os.Build;
+
+import com.orhanobut.logger.*;
 
 import floatingmuseum.hundredmeters.utils.SPUtil;
 
@@ -18,5 +21,11 @@ public class App extends Application {
         super.onCreate();
         context = this;
         SPUtil.init(this);
+        Logger.addLogAdapter(new AndroidLogAdapter() {
+            @Override
+            public boolean isLoggable(int priority, String tag) {
+                return BuildConfig.DEBUG;
+            }
+        });
     }
 }
