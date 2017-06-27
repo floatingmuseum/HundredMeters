@@ -44,7 +44,7 @@ import floatingmuseum.hundredmeters.utils.SPUtil;
  * Created by BotY on 2017/6/21.
  */
 
-public class ConnectService extends Service implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+public class ConnectionService extends Service implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     public static final String ACTION_SEND_TEXT = "actionSendText";
 
@@ -75,13 +75,13 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
                 .addApi(Nearby.CONNECTIONS_API)
                 .build();
         googleApiClient.connect();
-        Logger.d("ConnectService...onCreate:");
+        Logger.d("ConnectionService...onCreate:");
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         String action = intent.getAction();
-        Logger.d("ConnectService...onStartCommand:" + action);
+        Logger.d("ConnectionService...onStartCommand:" + action);
         if (!TextUtils.isEmpty(action)) {
             switch (action) {
                 case ACTION_SEND_TEXT:
@@ -93,19 +93,19 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
     }
 
     private void sendTextMessage(final String message) {
-        Logger.d("ConnectService...发送信息...message:" + message + "..." + isConnected() + "...");
+        Logger.d("ConnectionService...发送信息...message:" + message + "..." + isConnected() + "...");
         if (isConnected()) {
             try {
                 Nearby.Connections.sendPayload(googleApiClient, remoteEndpointID, Payload.fromBytes(message.getBytes("UTF-8")))
                         .setResultCallback(new ResultCallback<Status>() {
                             @Override
                             public void onResult(@NonNull Status status) {
-                                Logger.d("ConnectService...状态码:" + status.getStatusCode() + "...状态信息:" + StatusCodeManager.getInstance().getCodeMessage(status.getStatusCode()));
+                                Logger.d("ConnectionService...状态码:" + status.getStatusCode() + "...状态信息:" + StatusCodeManager.getInstance().getCodeMessage(status.getStatusCode()));
                                 if (status.getStatusCode() == CommonStatusCodes.SUCCESS) {
-                                    Logger.d("ConnectService...发送信息成功...onResult:" + status.toString());
+                                    Logger.d("ConnectionService...发送信息成功...onResult:" + status.toString());
                                     BotY.getInstance().sendNewMessage(message);
                                 } else if (CommonStatusCodes.ERROR == status.getStatusCode()) {
-                                    Logger.d("ConnectService...发送信息失败...onResult:" + status.toString());
+                                    Logger.d("ConnectionService...发送信息失败...onResult:" + status.toString());
                                 }
                             }
                         });
@@ -122,8 +122,7 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
     //addConnectionCallbacks
     @Override
     public void onConnected(@Nullable Bundle connectionHint) {
-        Nearby.Messages.
-        Logger.d("ConnectService...已连接GoogleApiClient...hint:" + connectionHint + "...isConnected:" + googleApiClient.isConnected());
+        Logger.d("ConnectionService...已连接GoogleApiClient...hint:" + connectionHint + "...isConnected:" + googleApiClient.isConnected());
         if (autoAdvertising) {
             startAdvertising();
         }
@@ -141,25 +140,25 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
         } else if (GoogleApiClient.ConnectionCallbacks.CAUSE_SERVICE_DISCONNECTED == cause) {
             reason = "A suspension cause informing that the service has been killed.";
         }
-        Logger.d("ConnectService...连接中止......Reason:" + reason);
+        Logger.d("ConnectionService...连接中止......Reason:" + reason);
     }
 
     //addOnConnectionFailedListener
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult result) {
-        Logger.d("ConnectService...连接失败......result:" + result.toString());
+        Logger.d("ConnectionService...连接失败......result:" + result.toString());
     }
 
     private void startAdvertising() {
         String nickname = SPUtil.getString("nickname", "");
-        Logger.d("ConnectService...nickname:" + nickname);
+        Logger.d("ConnectionService...nickname:" + nickname);
         BotY.getInstance().sendNewMessage(ResUtil.getString(R.string.start_advertising));
         Nearby.Connections.startAdvertising(googleApiClient, nickname, serviceID, connectionLifecycleCallback, new AdvertisingOptions(Strategy.P2P_CLUSTER))
                 .setResultCallback(new ResultCallback<Connections.StartAdvertisingResult>() {
                     @Override
                     public void onResult(@NonNull Connections.StartAdvertisingResult result) {
                         int statusCode = result.getStatus().getStatusCode();
-                        Logger.d("ConnectService...状态码:" + statusCode + "...状态信息:" + StatusCodeManager.getInstance().getCodeMessage(statusCode));
+                        Logger.d("ConnectionService...状态码:" + statusCode + "...状态信息:" + StatusCodeManager.getInstance().getCodeMessage(statusCode));
                         if (ConnectionsStatusCodes.STATUS_OK == statusCode) {
                             BotY.getInstance().sendNewMessage(ResUtil.getString(R.string.start_advertising_successfully));
                         } else if (ConnectionsStatusCodes.STATUS_ERROR == statusCode) {
@@ -176,7 +175,7 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
                 .setResultCallback(new ResultCallback<Status>() {
                     @Override
                     public void onResult(@NonNull Status status) {
-                        Logger.d("ConnectService...状态码:" + status.getStatusCode() + "...状态信息:" + StatusCodeManager.getInstance().getCodeMessage(status.getStatusCode()));
+                        Logger.d("ConnectionService...状态码:" + status.getStatusCode() + "...状态信息:" + StatusCodeManager.getInstance().getCodeMessage(status.getStatusCode()));
                         if (status.isSuccess()) {
                             BotY.getInstance().sendNewMessage(ResUtil.getString(R.string.start_discovery_successfully));
                         } else {
@@ -192,9 +191,9 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
                 .setResultCallback(new ResultCallback<Status>() {
                     @Override
                     public void onResult(@NonNull Status status) {
-                        Logger.d("ConnectService...状态码:" + status.getStatusCode() + "...状态信息:" + StatusCodeManager.getInstance().getCodeMessage(status.getStatusCode()));
+                        Logger.d("ConnectionService...状态码:" + status.getStatusCode() + "...状态信息:" + StatusCodeManager.getInstance().getCodeMessage(status.getStatusCode()));
                         if (status.isSuccess()) {
-                            Logger.d("ConnectService...请求连接...请求成功...等待认证");
+                            Logger.d("ConnectionService...请求连接...请求成功...等待认证");
                             BotY.getInstance().sendNewMessage("正在请求与" + remoteUser.getNickname() + "连接,等待认证...");
                             // We successfully requested a connection. Now both sides
                             // must accept before the connection is established.
@@ -205,7 +204,7 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
                              * 8007 STATUS_BLUETOOTH_ERROR   There was an error trying to use the phone's Bluetooth capabilities.
                              * 8012 STATUS_ENDPOINT_IO_ERROR   An attempt to read from/write to a connected remote endpoint failed. If this occurs repeatedly, consider invoking
                              */
-                            Logger.d("ConnectService...请求连接...请求失败" + status.toString());
+                            Logger.d("ConnectionService...请求连接...请求失败" + status.toString());
                             // Nearby Connections failed to request the connection.
                             BotY.getInstance().sendNewMessage("请求与" + remoteUser.getNickname() + "连接,请求失败...错误码:" + status.getStatusCode());
                         }
@@ -222,7 +221,7 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
     private void handleConnectRequest(String endpointID, ConnectionInfo info) {
         requestUser.put(endpointID, new RemoteUser(endpointID, info.getEndpointName()));
         if (autoAgreeConnectRequest) {
-            Logger.d("ConnectService...handleConnectRequest......允许建立连接:" + info.getEndpointName() + "...EndpointID:" + endpointID);
+            Logger.d("ConnectionService...handleConnectRequest......允许建立连接:" + info.getEndpointName() + "...EndpointID:" + endpointID);
             BotY.getInstance().sendNewMessage("同意与" + info.getEndpointName() + "建立连接.");
             Nearby.Connections.acceptConnection(googleApiClient, endpointID, payloadCallback);
         } else {
@@ -260,7 +259,7 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
     private ConnectionLifecycleCallback connectionLifecycleCallback = new ConnectionLifecycleCallback() {
         @Override
         public void onConnectionInitiated(String endpointID, ConnectionInfo info) {
-            Logger.d("ConnectService...onConnectionInitiated......请求建立连接:" + info.getEndpointName() + "...EndpointID:" + endpointID);
+            Logger.d("ConnectionService...onConnectionInitiated......请求建立连接:" + info.getEndpointName() + "...EndpointID:" + endpointID);
             BotY.getInstance().sendNewMessage(info.getEndpointName() + "请求与你建立连接");
             handleConnectRequest(endpointID, info);
         }
@@ -268,12 +267,12 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
         @Override
         public void onConnectionResult(String endpointID, ConnectionResolution resolution) {
             int statusCode = resolution.getStatus().getStatusCode();
-            Logger.d("ConnectService...状态码:" + statusCode + "...状态信息:" + StatusCodeManager.getInstance().getCodeMessage(statusCode));
+            Logger.d("ConnectionService...状态码:" + statusCode + "...状态信息:" + StatusCodeManager.getInstance().getCodeMessage(statusCode));
 
             switch (statusCode) {
                 case ConnectionsStatusCodes.STATUS_OK:
                     // We're connected! Can now start sending and receiving data.
-                    Logger.d("ConnectService...onConnectionResult():...endpointId:" + endpointID + "...StatusOK:连接建立成功");
+                    Logger.d("ConnectionService...onConnectionResult():...endpointId:" + endpointID + "...StatusOK:连接建立成功");
                     connectedUser.put(endpointID, requestUser.get(endpointID));
                     requestUser.remove(endpointID);
                     remoteEndpointID = endpointID;
@@ -281,7 +280,7 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
                     break;
                 case ConnectionsStatusCodes.STATUS_CONNECTION_REJECTED:
                     // The connection was rejected by one or both sides.
-                    Logger.d("ConnectService...onConnectionResult():...endpointId:" + endpointID + "...StatusRejected:连接被拒绝");
+                    Logger.d("ConnectionService...onConnectionResult():...endpointId:" + endpointID + "...StatusRejected:连接被拒绝");
                     BotY.getInstance().sendNewMessage("与" + requestUser.get(endpointID) + "连接建立被拒绝.");
                     requestUser.remove(endpointID);
                     remoteEndpointID = "";
@@ -300,14 +299,14 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
     private EndpointDiscoveryCallback endpointDiscoveryCallback = new EndpointDiscoveryCallback() {
         @Override
         public void onEndpointFound(final String endpointId, final DiscoveredEndpointInfo info) {
-            Logger.d("ConnectService...onEndpointFound......搜寻到:" + info.getEndpointName() + "...EndpointID:" + endpointId + "...发起连接");
+            Logger.d("ConnectionService...onEndpointFound......搜寻到:" + info.getEndpointName() + "...EndpointID:" + endpointId + "...发起连接");
             discoverUser.put(endpointId, new RemoteUser(endpointId, info.getEndpointName()));
             BotY.getInstance().sendNewMessage("找到附近用户" + info.getEndpointName());
         }
 
         @Override
         public void onEndpointLost(String endpointId) {
-            Logger.d("ConnectService...onEndpointLost......丢失...EndpointID:" + endpointId);
+            Logger.d("ConnectionService...onEndpointLost......丢失...EndpointID:" + endpointId);
             BotY.getInstance().sendNewMessage("丢失附近用户" + discoverUser.get(endpointId));
             discoverUser.remove(endpointId);
         }
@@ -316,13 +315,13 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
     private PayloadCallback payloadCallback = new PayloadCallback() {
         @Override
         public void onPayloadReceived(String endpointID, Payload payload) {
-            Logger.d("ConnectService...接收信息...onPayloadReceived():endpointID:" + endpointID + "...Type:" + payload.getType());
+            Logger.d("ConnectionService...接收信息...onPayloadReceived():endpointID:" + endpointID + "...Type:" + payload.getType());
             if (Payload.Type.BYTES == payload.getType()) {
                 try {
                     String content = new String(payload.asBytes(), "UTF-8");
 //                    ToastUtil.show("Message:" + content + "...From:" + endpointID);
                     MessageManager.getInstance().sendNewMessage(connectedUser.get(endpointID), content);
-                    Logger.d("ConnectService...接收信息...onPayloadReceived()...remoteNickname:" + connectedUser.get(endpointID) + "...Message:" + content);
+                    Logger.d("ConnectionService...接收信息...onPayloadReceived()...remoteNickname:" + connectedUser.get(endpointID) + "...Message:" + content);
                 } catch (UnsupportedEncodingException e) {
                     e.printStackTrace();
                 }
@@ -331,7 +330,7 @@ public class ConnectService extends Service implements GoogleApiClient.Connectio
 
         @Override
         public void onPayloadTransferUpdate(String endpointID, PayloadTransferUpdate update) {
-//            Logger.d("ConnectService...接收信息...onPayloadReceived()...remoteNickname:" + connectedUser.get(endpointID) + "...endpointID:" + endpointID + "...Total:" + update.getTotalBytes() + "...Current:" + update.getBytesTransferred());
+//            Logger.d("ConnectionService...接收信息...onPayloadReceived()...remoteNickname:" + connectedUser.get(endpointID) + "...endpointID:" + endpointID + "...Total:" + update.getTotalBytes() + "...Current:" + update.getBytesTransferred());
         }
     };
 }

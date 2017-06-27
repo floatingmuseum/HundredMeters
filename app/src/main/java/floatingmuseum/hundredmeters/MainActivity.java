@@ -9,18 +9,12 @@ import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.LinearSmoothScroller;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextUtils;
-import android.view.KeyEvent;
 import android.view.View;
-import android.view.inputmethod.EditorInfo;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
-
-import com.orhanobut.logger.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -116,15 +110,16 @@ public class MainActivity extends AppCompatActivity implements BotY.BotYListener
     }
 
     private void startConnectService() {
-        startService(new Intent(this, ConnectService.class));
+//        startService(new Intent(this, ConnectionService.class));
+        startService(new Intent(this, MessagesService.class));
     }
 
     private void sendMessage() {
         Editable editable = etInput.getText();
         if (!TextUtils.isEmpty(editable)) {
-            Intent messageIntent = new Intent(this, ConnectService.class);
-            messageIntent.setAction(ConnectService.ACTION_SEND_TEXT);
-            messageIntent.putExtra(ConnectService.EXTRA_TEXT_MESSAGE, editable.toString());
+            Intent messageIntent = new Intent(this, ConnectionService.class);
+            messageIntent.setAction(ConnectionService.ACTION_SEND_TEXT);
+            messageIntent.putExtra(ConnectionService.EXTRA_TEXT_MESSAGE, editable.toString());
             startService(messageIntent);
             etInput.setText("");
         }
@@ -152,6 +147,7 @@ public class MainActivity extends AppCompatActivity implements BotY.BotYListener
         super.onDestroy();
         BotY.getInstance().setBotYListener(null);
         MessageManager.getInstance().setOnNewMessageListener(null);
-        stopService(new Intent(this, ConnectService.class));
+//        stopService(new Intent(this, ConnectionService.class));
+        stopService(new Intent(this, MessagesService.class));
     }
 }

@@ -9,6 +9,8 @@
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
     <application
         android:name=".App"
         android:allowBackup="true"
@@ -29,7 +31,8 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".ConnectService" />
+        <service android:name=".ConnectionService" />
+        <service android:name=".MessagesService"/>
     </application>
 
 </manifest>
