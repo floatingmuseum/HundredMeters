@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--信息-->
+    <string name="play_service_not_available">谷歌服务不可用.</string>
+    <string name="welcome_stranger">欢迎来到100m.</string>
+    <string name="just_create_new_name">我刚刚通过随机算法帮你起了一个昵称,</string>
+    <string name="how_to_rename">如果你不喜欢这个昵称,可以到设置页面修改,或者使用内置指令 <![CDATA[—newname <nickname>]]>.</string>
+    <string name="welcome_back">欢迎回来,</string>
+    <string name="sorry_for_no_google_service">没有谷歌服务我什么也做不了,唉.</string>
+    <string name="start_advertising">开始进行广播…</string>
+    <string name="start_advertising_successful">启动广播成功.</string>
+    <string name="start_advertising_failed">启动广播失败.</string>
+    <string name="already_advertising">已处于广播发送状态中.</string>
+    <string name="start_discovery_successful">启动搜索成功.</string>
+    <string name="start_discovery_failed">启动搜索失败.</string>
+    <string name="no_one_around_you">在你周围没有发现用户.</string>
+    <string name="around_user">周围用户:</string>
+    <string name="request_connecting">正在请求与 </string>
+    <string name="waiting_for_authentication"> 连接,等待认证…</string>
+    <string name="request_failed">请求与 </string>
+    <string name="request_failed_code"> 连接,请求失败…错误码:</string>
+    <string name="unknown_nickname">未知昵称:</string>
+    <string name="accept_connect">同意与 </string>
+    <string name="accept_connect_link"> 建立连接.</string>
+    <string name="request_connect_to_you"> 请求与你建立连接.</string>
+    <string name="connect_successful">连接建立成功:</string>
+    <string name="connect_refused">连接建立被拒绝:</string>
+    <string name="disconnect_from">连接已断开:</string>
+    <string name="found_user">找到附近用户:</string>
+    <string name="lost_user">丢失附近用户:</string>
+
+    <!--昵称-->
+    <string name="alert_nickname_length">昵称长度必须处于1–10之间.</string>
+    <string name="alert_nickname_same_as_100m">请不要使用和我一样的昵称.</string>
+
+    <!--指令-->
+    <string name="all_inside_commands">所有内置指令:</string>
+    <string name="command_help">列出所有指令与其作用.</string>
+    <string name="command_around">列出周围用户</string>
+    <string name="command_connect"><![CDATA[连接指定用户 —connect <nickname>]]></string>
+    <string name="command_rename"><![CDATA[修改本机昵称 —rename <nickname>]]></string>
+
+
+
+</resources>

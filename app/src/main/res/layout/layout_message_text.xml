@@ -11,13 +11,14 @@
         android:id="@+id/tv_nickname"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="@color/text_green"
+        android:textColor="@color/text_dark_green"
         tools:text="Bot-Y: " />
 
     <TextView
         android:id="@+id/tv_message"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="@color/text_green"
-        tools:text="HundredMeters是一款离线通讯应用,你可以发现周围百米范围内同样使用此应用的人,与其建立连接后,可以互发消息,文件,而做到这一切完全不需要网络的支持." />
+        android:textColor="@color/text_dark_green"
+        tools:text="Around User:"/>
+    <!--HundredMeters是一款离线通讯应用,你可以发现周围百米范围内同样使用此应用的人,与其建立连接后,可以互发消息,文件,而做到这一切完全不需要网络的支持.-->
 </LinearLayout>

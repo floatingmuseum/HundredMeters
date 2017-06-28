@@ -93,6 +93,11 @@ public class SPUtil {
                 .apply();
     }
 
+    public static void putLong(String key, long value) {
+        sp.edit().putLong(key, value)
+                .apply();
+    }
+
     public static void putLong(String spName, String key, long value) {
         mContext.getSharedPreferences(spName, Context.MODE_PRIVATE)
                 .edit()

@@ -6,20 +6,20 @@ package floatingmuseum.hundredmeters.entities;
 
 public class RemoteMessage {
 
-    private RemoteUser remoteUser;
+    private User user;
     private String message;
 
-    public RemoteMessage(RemoteUser remoteUser, String message) {
-        this.remoteUser = remoteUser;
+    public RemoteMessage(User user, String message) {
+        this.user = user;
         this.message = message;
     }
 
-    public RemoteUser getRemoteUser() {
-        return remoteUser;
+    public User getUser() {
+        return user;
     }
 
-    public void setRemoteUser(RemoteUser remoteUser) {
-        this.remoteUser = remoteUser;
+    public void setUser(RemoteUser user) {
+        this.user = user;
     }
 
     public String getMessage() {
@@ -33,7 +33,7 @@ public class RemoteMessage {
     @Override
     public String toString() {
         return "RemoteMessage{" +
-                "remoteUser=" + remoteUser +
+                "user=" + user +
                 ", message='" + message + '\'' +
                 '}';
     }

@@ -23,13 +23,14 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import floatingmuseum.hundredmeters.entities.RemoteMessage;
 import floatingmuseum.hundredmeters.entities.RemoteUser;
+import floatingmuseum.hundredmeters.entities.User;
 import floatingmuseum.hundredmeters.utils.GoogleUtil;
 import floatingmuseum.hundredmeters.utils.NicknameUtil;
 import floatingmuseum.hundredmeters.utils.ResUtil;
 import floatingmuseum.hundredmeters.utils.ToastUtil;
 
 
-public class MainActivity extends AppCompatActivity implements BotY.BotYListener, MessageManager.NewMessageListener {
+public class MainActivity extends AppCompatActivity implements BotY.BotYListener, MessageManager.ReceiveMessageListener {
 
     @BindView(R.id.et_input)
     EditText etInput;
@@ -100,7 +101,7 @@ public class MainActivity extends AppCompatActivity implements BotY.BotYListener
     }
 
     private void initGuide() {
-        MessageManager.getInstance().setOnNewMessageListener(this);
+        MessageManager.getInstance().setOnReceiveMessageListener(this);
         if (TextUtils.isEmpty(NicknameUtil.getNickname())) {
             BotY.getInstance().welcomeUser(true);
         } else {
@@ -110,17 +111,17 @@ public class MainActivity extends AppCompatActivity implements BotY.BotYListener
     }
 
     private void startConnectService() {
-//        startService(new Intent(this, ConnectionService.class));
-        startService(new Intent(this, MessagesService.class));
+        startService(new Intent(this, ConnectionService.class));
     }
 
     private void sendMessage() {
         Editable editable = etInput.getText();
         if (!TextUtils.isEmpty(editable)) {
-            Intent messageIntent = new Intent(this, ConnectionService.class);
-            messageIntent.setAction(ConnectionService.ACTION_SEND_TEXT);
-            messageIntent.putExtra(ConnectionService.EXTRA_TEXT_MESSAGE, editable.toString());
-            startService(messageIntent);
+            if (BuiltInCommands.getInstance().isBuiltInCommands(editable.toString())) {
+
+            } else {
+                ConnectionService.sendCommand(ConnectionService.ACTION_SEND_TEXT, ConnectionService.EXTRA_TEXT_MESSAGE, editable.toString());
+            }
             etInput.setText("");
         }
     }
@@ -131,11 +132,16 @@ public class MainActivity extends AppCompatActivity implements BotY.BotYListener
     }
 
     @Override
+    public void onSendNewMessage(User user, String message) {
+        addMessage(user, message);
+    }
+
+    @Override
     public void onReceiveNewMessage(RemoteUser remoteUser, String message) {
         addMessage(remoteUser, message);
     }
 
-    private void addMessage(RemoteUser user, String message) {
+    private void addMessage(User user, String message) {
         RemoteMessage remoteMessage = new RemoteMessage(user, message);
         messageList.add(remoteMessage);
         messageAdapter.notifyItemInserted(messageList.size() - 1);
@@ -146,8 +152,7 @@ public class MainActivity extends AppCompatActivity implements BotY.BotYListener
     protected void onDestroy() {
         super.onDestroy();
         BotY.getInstance().setBotYListener(null);
-        MessageManager.getInstance().setOnNewMessageListener(null);
-//        stopService(new Intent(this, ConnectionService.class));
-        stopService(new Intent(this, MessagesService.class));
+        MessageManager.getInstance().setOnReceiveMessageListener(null);
+        stopService(new Intent(this, ConnectionService.class));
     }
 }

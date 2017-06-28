@@ -35,10 +35,10 @@ public class BotY {
 
     public void welcomeUser(boolean isStranger) {
         if (isStranger) {
-            NicknameUtil.createNickname();
-            String nickname = NicknameUtil.getNickname();
+            String newNickname = NicknameUtil.createNickname();
+            newNickname = NicknameUtil.getSimpleName(newNickname);
             listener.onBotYSaid(user, App.context.getString(R.string.welcome_stranger));
-            listener.onBotYSaid(user, App.context.getString(R.string.just_create_new_name) + nickname + ".");
+            listener.onBotYSaid(user, App.context.getString(R.string.just_create_new_name) + newNickname + ".");
             listener.onBotYSaid(user, App.context.getString(R.string.how_to_rename));
         } else {
             listener.onBotYSaid(user, App.context.getString(R.string.welcome_back) + NicknameUtil.getNickname() + ".");

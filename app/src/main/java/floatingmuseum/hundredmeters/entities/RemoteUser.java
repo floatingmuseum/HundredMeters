@@ -4,13 +4,12 @@ package floatingmuseum.hundredmeters.entities;
  * Created by Floatingmuseum on 2017/6/26.
  */
 
-public class RemoteUser {
+public class RemoteUser extends User{
     private String endpointID;
-    private String nickname;
 
     public RemoteUser(String endpointID, String nickname) {
+        super(nickname);
         this.endpointID = endpointID;
-        this.nickname = nickname;
     }
 
     public String getEndpointID() {
@@ -21,19 +20,10 @@ public class RemoteUser {
         this.endpointID = endpointID;
     }
 
-    public String getNickname() {
-        return nickname;
-    }
-
-    public void setNickname(String nickname) {
-        this.nickname = nickname;
-    }
-
     @Override
     public String toString() {
         return "RemoteUser{" +
                 "endpointID='" + endpointID + '\'' +
-                ", nickname='" + nickname + '\'' +
                 '}';
     }
 }

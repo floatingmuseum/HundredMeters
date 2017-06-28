@@ -1,6 +1,8 @@
 package floatingmuseum.hundredmeters;
 
 import floatingmuseum.hundredmeters.entities.RemoteUser;
+import floatingmuseum.hundredmeters.entities.User;
+import floatingmuseum.hundredmeters.utils.NicknameUtil;
 
 /**
  * Created by BotY on 2017/6/21.
@@ -10,7 +12,7 @@ public class MessageManager {
 
     private static MessageManager manager;
 
-    private NewMessageListener newMessageListener;
+    private ReceiveMessageListener receiveMessageListener;
 
     private MessageManager() {
     }
@@ -26,15 +28,22 @@ public class MessageManager {
         return manager;
     }
 
-    public void setOnNewMessageListener(NewMessageListener newMessageListener) {
-        this.newMessageListener = newMessageListener;
+    public void setOnReceiveMessageListener(ReceiveMessageListener receiveMessageListener) {
+        this.receiveMessageListener = receiveMessageListener;
     }
 
-    public void sendNewMessage(RemoteUser remoteUser, String message) {
-        newMessageListener.onReceiveNewMessage(remoteUser,  message);
+    public void receiveNewMessage(RemoteUser remoteUser, String message) {
+        receiveMessageListener.onReceiveNewMessage(remoteUser, message);
     }
 
-    public interface NewMessageListener {
-        void onReceiveNewMessage(RemoteUser remoteUser,  String message);
+    public void sendNewMessage(String message) {
+        User user = new User(NicknameUtil.getNickname());
+        receiveMessageListener.onSendNewMessage(user, message);
+    }
+
+    public interface ReceiveMessageListener {
+        void onReceiveNewMessage(RemoteUser remoteUser, String message);
+
+        void onSendNewMessage(User user, String message);
     }
 }

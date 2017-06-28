@@ -1,5 +1,6 @@
 package floatingmuseum.hundredmeters.utils;
 
+import android.support.annotation.NonNull;
 import android.text.TextUtils;
 
 import com.orhanobut.logger.Logger;
@@ -23,16 +24,13 @@ public class NicknameUtil {
             '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
 
     public static String createNickname() {
-        long startTime = System.currentTimeMillis();
         String nickname = "";
         Random random = new Random();
         for (int x = 0; x < 6; x++) {
             int position = random.nextInt(cases.length);
             nickname += cases[position];
         }
-        nickname = nickname + "(" + System.currentTimeMillis() + ")";
-        long endTime = System.currentTimeMillis() - startTime;
-        Logger.d("随机昵称:" + nickname + "...生成耗时:" + endTime);
+        nickname = nickname + "|" + System.currentTimeMillis();
         SPUtil.putString("nickname", nickname);
         return nickname;
     }
@@ -40,12 +38,21 @@ public class NicknameUtil {
     public static String getNickname() {
         String nickname = SPUtil.getString("nickname", "");
         if (!TextUtils.isEmpty(nickname)) {
-            nickname = nickname.substring(0, nickname.indexOf("("));
+            nickname = nickname.split("\\|")[0];
         }
         return nickname;
     }
 
+    public static String getSimpleName(@NonNull String nickname) {
+        return nickname.split("\\|")[0];
+    }
+
     public static String getNicknameWithCreateTime() {
         return SPUtil.getString("nickname", "");
+    }
+
+    public static void saveNewName(String newName) {
+        String name = newName + "|" + getNicknameWithCreateTime().split("\\|")[1];
+        SPUtil.putString("nickname", name);
     }
 }
