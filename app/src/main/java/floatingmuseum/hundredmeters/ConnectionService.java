@@ -2,11 +2,15 @@ package floatingmuseum.hundredmeters;
 
 import android.app.Service;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.ParcelFileDescriptor;
+import android.os.Parcelable;
 import android.provider.BlockedNumberContract;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.util.SimpleArrayMap;
 import android.text.TextUtils;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -31,6 +35,9 @@ import com.google.android.gms.nearby.connection.PayloadTransferUpdate;
 import com.google.android.gms.nearby.connection.Strategy;
 import com.orhanobut.logger.Logger;
 
+import java.io.File;
+import java.io.FileDescriptor;
+import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
@@ -47,11 +54,14 @@ import floatingmuseum.hundredmeters.utils.SPUtil;
 public class ConnectionService extends Service implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     public static final String ACTION_SEND_TEXT = "actionSendText";
+    public static final String ACTION_SEND_FILE = "actionSendFile";
     public static final String ACTION_CONNECT_TO = "actionConnectTo";
     public static final String ACTION_LIST_AROUND_USER = "actionListAroundUser";
 
     public static final String EXTRA_TEXT_MESSAGE = "extraTextMessage";
     public static final String EXTRA_CONNECT_NICKNAME = "extraConnectNickname";
+    public static final String EXTRA_FILE_URI = "extraFileUri";
+    public static final String EXTRA_FILE_NAME = "extraFileName";
 
     private GoogleApiClient googleApiClient;
     private boolean autoAdvertising = true;
@@ -69,12 +79,23 @@ public class ConnectionService extends Service implements GoogleApiClient.Connec
         return null;
     }
 
-    public static void sendCommand(@NonNull String action, @Nullable String extraName, @Nullable String extraValue) {
-        Logger.d("Phoenix got command:" + action + "..." + extraName + "..." + extraValue);
+    public static void sendCommand(@NonNull String action) {
+        sendCommand(action, null, null, null, null);
+    }
+
+    public static void sendCommand(@NonNull String action, @Nullable String extraName1, @Nullable String extraValue1) {
+        sendCommand(action, extraName1, extraValue1, null, null);
+    }
+
+    public static void sendCommand(@NonNull String action, @Nullable String extraName1, @Nullable String extraValue1, @Nullable String extraName2, @Nullable Uri extraValue2) {
+        Logger.d("Phoenix got command:" + action + "..." + extraName1 + "..." + extraValue1);
         Intent intent = new Intent(App.context, ConnectionService.class);
         intent.setAction(action);
-        if (!TextUtils.isEmpty(extraName)) {
-            intent.putExtra(extraName, extraValue);
+        if (!TextUtils.isEmpty(extraName1)) {
+            intent.putExtra(extraName1, extraValue1);
+        }
+        if (!TextUtils.isEmpty(extraName2)) {
+            intent.putExtra(extraName2, extraValue2);
         }
         App.context.startService(intent);
     }
@@ -93,22 +114,56 @@ public class ConnectionService extends Service implements GoogleApiClient.Connec
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        String action = intent.getAction();
-        Logger.d("ConnectionService...onStartCommand:" + action);
-        if (!TextUtils.isEmpty(action)) {
-            switch (action) {
-                case ACTION_SEND_TEXT:
-                    sendTextMessage(intent.getStringExtra(EXTRA_TEXT_MESSAGE));
-                    break;
-                case ACTION_CONNECT_TO:
-                    requestConnection(intent.getStringExtra(EXTRA_CONNECT_NICKNAME));
-                    break;
-                case ACTION_LIST_AROUND_USER:
-                    listAroundUser();
-                    break;
+        if (intent != null) {
+            String action = intent.getAction();
+            Logger.d("ConnectionService...onStartCommand:" + action);
+            if (!TextUtils.isEmpty(action)) {
+                switch (action) {
+                    case ACTION_SEND_TEXT:
+                        sendTextMessage(intent.getStringExtra(EXTRA_TEXT_MESSAGE));
+                        break;
+                    case ACTION_CONNECT_TO:
+                        requestConnection(intent.getStringExtra(EXTRA_CONNECT_NICKNAME));
+                        break;
+                    case ACTION_LIST_AROUND_USER:
+                        listAroundUser();
+                        break;
+                    case ACTION_SEND_FILE:
+                        Uri uri = intent.getParcelableExtra(EXTRA_FILE_URI);
+                        sendFileMessage(intent.getStringExtra(EXTRA_FILE_NAME), uri);
+                }
             }
         }
         return super.onStartCommand(intent, flags, startId);
+    }
+
+    private SimpleArrayMap<Long, Payload> incomingPayloads = new SimpleArrayMap<>();
+    private SimpleArrayMap<Long, String> filePayloadFilenames = new SimpleArrayMap<>();
+
+    private void sendFileMessage(String fileName, Uri uri) {
+        //fileName应该特殊处理一下
+        try {
+            ParcelFileDescriptor fileDescriptor = App.context.getContentResolver().openFileDescriptor(uri, "r");
+            Payload payload = Payload.fromFile(fileDescriptor);
+            long filePayloadID = payload.getId();
+            String insideMessage = "100mInsideMessage:File:" + filePayloadID + ":" + fileName;
+            sendTextMessage(insideMessage);
+            Nearby.Connections.sendPayload(googleApiClient, remoteEndpointID, payload)
+                    .setResultCallback(new ResultCallback<Status>() {
+                        @Override
+                        public void onResult(@NonNull Status status) {
+                            Logger.d("ConnectionService...状态码:" + status.getStatusCode() + "...状态信息:" + StatusCodeManager.getInstance().getCodeMessage(status.getStatusCode()));
+                            if (status.getStatusCode() == CommonStatusCodes.SUCCESS) {
+                                Logger.d("ConnectionService...发送文件成功...onResult:" + status.toString());
+//                                MessageManager.getInstance().sendNewMessage(message);
+                            } else if (CommonStatusCodes.ERROR == status.getStatusCode()) {
+                                Logger.d("ConnectionService...发送文件失败...onResult:" + status.toString());
+                            }
+                        }
+                    });
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     private void listAroundUser() {
@@ -125,6 +180,9 @@ public class ConnectionService extends Service implements GoogleApiClient.Connec
 
     private void sendTextMessage(final String message) {
         Logger.d("ConnectionService...发送信息...message:" + message + "..." + isConnected() + "...");
+        if (message.length() > Connections.MAX_BYTES_DATA_SIZE) {
+            Logger.d("ConnectionService...发送信息...消息体积过大...message:" + message);
+        }
         if (isConnected()) {
             try {
                 Nearby.Connections.sendPayload(googleApiClient, remoteEndpointID, Payload.fromBytes(message.getBytes("UTF-8")))
@@ -219,7 +277,6 @@ public class ConnectionService extends Service implements GoogleApiClient.Connec
     private RemoteUser getRemoteUser(String nickname) {
         for (String key : discoverUser.keySet()) {
             RemoteUser remoteUser = discoverUser.get(key);
-            Logger.d("ConnectionService...已发现用户:" + remoteUser.toString());
             if (nickname.equals(NicknameUtil.getSimpleName(remoteUser.getNickname()))) {
                 return remoteUser;
             }
@@ -250,7 +307,7 @@ public class ConnectionService extends Service implements GoogleApiClient.Connec
                                  * 8007 STATUS_BLUETOOTH_ERROR   There was an error trying to use the phone's Bluetooth capabilities.
                                  * 8012 STATUS_ENDPOINT_IO_ERROR   An attempt to read from/write to a connected remote endpoint failed. If this occurs repeatedly, consider invoking
                                  */
-                                Logger.d("ConnectionService...请求连接...请求失败" + status.toString());
+                                Logger.d("ConnectionService...请求连接...请求失败" + StatusCodeManager.getInstance().getCodeMessage(status.getStatusCode()));
                                 // Nearby Connections failed to request the connection.
                                 BotY.getInstance().sendNewMessage(ResUtil.getString(R.string.request_failed) + NicknameUtil.getSimpleName(toConnectUser.getNickname()) + ResUtil.getString(R.string.request_failed_code) + status.getStatusCode());
                             }
@@ -370,18 +427,55 @@ public class ConnectionService extends Service implements GoogleApiClient.Connec
             if (Payload.Type.BYTES == payload.getType()) {
                 try {
                     String content = new String(payload.asBytes(), "UTF-8");
+                    if (content.startsWith("100mInsideMessage:File")) {
+                        handleFileNameMessage(content);
+                    } else {
+                        MessageManager.getInstance().receiveNewMessage(connectedUser.get(endpointID), content);
+                    }
 //                    ToastUtil.show("Message:" + content + "...From:" + endpointID);
-                    MessageManager.getInstance().receiveNewMessage(connectedUser.get(endpointID), content);
                     Logger.d("ConnectionService...接收信息...onPayloadReceived()...remoteNickname:" + connectedUser.get(endpointID) + "...Message:" + content);
                 } catch (UnsupportedEncodingException e) {
                     e.printStackTrace();
                 }
+            } else if (Payload.Type.FILE == payload.getType()) {
+                Payload.File file = payload.asFile();
+                if (file != null) {
+                    File javaFile = file.asJavaFile();
+                    if (javaFile != null) {
+                        Logger.d("ConnectionService...接收信息...onPayloadReceived():endpointID:" + endpointID + "...File:" + javaFile.getName());
+                    }
+                }
+                incomingPayloads.put(payload.getId(), payload);
             }
         }
 
         @Override
         public void onPayloadTransferUpdate(String endpointID, PayloadTransferUpdate update) {
-//            Logger.d("ConnectionService...接收信息...onPayloadReceived()...remoteNickname:" + connectedUser.get(endpointID) + "...endpointID:" + endpointID + "...Total:" + update.getTotalBytes() + "...Current:" + update.getBytesTransferred());
+            if (PayloadTransferUpdate.Status.SUCCESS == update.getStatus()) {
+                Payload payload = incomingPayloads.remove(update.getPayloadId());
+                if (payload != null && payload.getType() == Payload.Type.FILE) {
+                    // Retrieve the filename that was received in a bytes payload.
+                    String newFilename = filePayloadFilenames.remove(endpointID);
+//                    File payloadFile = payload.asFile().asJavaFile();
+
+                    // Rename the file.
+//                    payloadFile.renameTo(new File(payloadFile.getParentFile(), newFilename));
+                }
+                Logger.d("ConnectionService...接收信息...onPayloadReceived()...成功...ID:" + connectedUser.get(endpointID));
+            } else if (PayloadTransferUpdate.Status.FAILURE == update.getStatus()) {
+                Logger.d("ConnectionService...接收信息...onPayloadReceived()...失败...ID:" + connectedUser.get(endpointID));
+            } else if (PayloadTransferUpdate.Status.IN_PROGRESS == update.getStatus()) {
+                Logger.d("ConnectionService...接收信息...onPayloadReceived()...进度...ID:" + connectedUser.get(endpointID) + "...Total:" + update.getTotalBytes() + "...Current:" + update.getBytesTransferred());
+            }
         }
     };
+
+    private void handleFileNameMessage(String content) {
+        String extraMessage = content.substring("100mInsideMessage:File:".length());
+        int colonIndex = extraMessage.indexOf(":");
+        String payloadID = extraMessage.substring(0, colonIndex);
+        String filename = extraMessage.substring(colonIndex + 1);
+        Logger.d("ConnectionService...PayloadID:" + payloadID + "...FileName:" + filename + "...Content:" + content + "...Extra:" + extraMessage);
+        filePayloadFilenames.put(Long.valueOf(payloadID), filename);
+    }
 }

@@ -4,7 +4,7 @@
     <string name="play_service_not_available">谷歌服务不可用.</string>
     <string name="welcome_stranger">欢迎来到100m.</string>
     <string name="just_create_new_name">我刚刚通过随机算法帮你起了一个昵称,</string>
-    <string name="how_to_rename">如果你不喜欢这个昵称,可以到设置页面修改,或者使用内置指令 <![CDATA[—newname <nickname>]]>.</string>
+    <string name="how_to_rename">如果你不喜欢这个昵称,可以到设置页面修改,或者使用内置指令 <![CDATA[—rename <nickname>]]>.</string>
     <string name="welcome_back">欢迎回来,</string>
     <string name="sorry_for_no_google_service">没有谷歌服务我什么也做不了,唉.</string>
     <string name="start_advertising">开始进行广播…</string>

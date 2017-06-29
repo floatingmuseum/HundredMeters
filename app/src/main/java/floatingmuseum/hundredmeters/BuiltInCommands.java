@@ -25,6 +25,7 @@ public class BuiltInCommands {
     private static final String COMMAND_AROUND = "--around";
     private static final String COMMAND_CONNECT = "--connect";
     private static final String COMMAND_RENAME = "--rename";
+    private static final String COMMAND_SEND_FILE = "--send";
 
     private BuiltInCommands() {
         /**
@@ -38,6 +39,8 @@ public class BuiltInCommands {
         commandsMeaning.put(COMMAND_CONNECT, ResUtil.getString(R.string.command_connect));
         commands.add(COMMAND_RENAME);
         commandsMeaning.put(COMMAND_RENAME, ResUtil.getString(R.string.command_rename));
+        commands.add(COMMAND_SEND_FILE);
+        commandsMeaning.put(COMMAND_SEND_FILE, "发送文件");
     }
 
     public static BuiltInCommands getInstance() {
@@ -66,7 +69,7 @@ public class BuiltInCommands {
         if (COMMAND_HELP.equals(command[0])) {
             listAllCommands();
         } else if (COMMAND_AROUND.equals(command[0])) {
-            ConnectionService.sendCommand(ConnectionService.ACTION_LIST_AROUND_USER, null, null);
+            ConnectionService.sendCommand(ConnectionService.ACTION_LIST_AROUND_USER);
         } else if (COMMAND_CONNECT.equals(command[0])) {
             ConnectionService.sendCommand(ConnectionService.ACTION_CONNECT_TO, ConnectionService.EXTRA_CONNECT_NICKNAME, command[1]);
         } else if (COMMAND_RENAME.equals(command[0])) {
@@ -77,6 +80,8 @@ public class BuiltInCommands {
             } else {
                 NicknameUtil.saveNewName(command[1]);
             }
+        } else if (COMMAND_SEND_FILE.equals(command[0])) {
+
         }
     }
 
